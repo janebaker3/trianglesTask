@@ -41,8 +41,6 @@ if givingFeedback
 end
 
 %% 
-nextInst = false;
-finalInst = false;
 switchTime = 0;
 
 % change states according to the hazard rate
