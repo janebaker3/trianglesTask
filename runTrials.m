@@ -2,9 +2,9 @@ function [data, frameNum, accuracy] = runTrials(window, f, bl, frameNum, data, .
     white, grey, green, orange, red, defTriCol, ...
     x1, x3, xOffset, yCenterTri, anglesRad, radius, isConvex, newWidth, ...
     frameTime, slack, numDistractors, H, spaceKey, stdHrz, stdVert, ...
-    doingEyetracking, target, distractor, beliefGreen, stateGreen, ...
-    halfDist, wideRange, givingFeedback, instructions1, instructions2, showInstruction, ...
-    showAccuracy, vbl, endAudio)
+    doingEyetracking, target, distractor,givingFeedback, instructions1, ...
+    instructions2, showInstruction, showAccuracy, vbl, endAudio, ...
+    xCenterLeft, xCenterRight, leftBound, rightBound, xPosLeft, xPosRight, yPos)
 
 KbQueueFlush();
 KbQueueStart();
@@ -56,77 +56,13 @@ for j = 2:f
     end
 end
 
-% set position of both triangles
-if wideRange
-    xCenterLeftTri = x1;
-    xCenterRightTri = x3;
-else
-    if ~doingEyetracking %%%%%
-        xCenterLeftTri = newWidth / 8;
-        xCenterRightTri = 7 *(newWidth / 8);
-    else
-        xCenterLeftTri = xOffset - (newWidth / 3);
-        xCenterRightTri = xOffset + (newWidth / 3);
-    end
-end
-
-% recompute triangle position
-xPosLeft  = cos(anglesRad) * radius + xCenterLeftTri;
-xPosRight = cos(anglesRad) * radius + xCenterRightTri;
-yPos = sin(anglesRad) * radius + yCenterTri;
-
-% set up bounds
-if halfDist || wideRange
-    leftBound = xCenterLeftTri;
-    rightBound = xCenterRightTri;
-else
-    leftBound = x1;
-    rightBound = x3;
-end
+sourceX = zeros(1, f);
+sourceX(isLeft) = xCenterLeft;
+sourceX(~isLeft) = xCenterRight;
 
 if showInstruction
     % go through instructions at the beginning of each block
     blockInstructions(window, instructions1, white, spaceKey, frameTime);
-    if bl == 3
-        next = false;
-        targetX = zeros(1, 100);
-        targetY = zeros(1, 100);
-        for t = 1:100
-            targetX(t) = getValidTargetX(xCenterLeftTri, leftBound, rightBound, stdHrz, ...
-                wideRange, halfDist, xCenterLeftTri, xCenterRightTri);
-            targetY(t) = normrnd(yCenterTri, stdVert);
-        end
-
-        % show demo until space is pressed
-
-        textTop = ['This is the distribution that targets are selected\n\n' ...
-            'from when the left triangle is the source.'];
-        textBottom = 'Press space to continue.';
-
-        while ~next
-            % add text
-            DrawFormattedText(window, textTop, 'center', 50, white);
-            DrawFormattedText(window, textBottom, 'center', newHeight - 75, white);
-
-            % draw triangles
-            Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);
-            Screen('FillPoly', window, defTriCol, [xPosRight; yPos]', isConvex);
-
-            % draw targets
-            for t = 1:100
-                DrawFormattedText(window, 'T', targetX(t), targetY(t), red);
-            end
-            Screen('Flip', window);
-
-            % check for keypress and switch to right demo when space is pressed
-            [keyIsdown, ~, keyCode] = KbCheck;
-            if keyIsdown && keyCode(spaceKey)
-                next = true;
-                KbReleaseWait;
-            end
-        end
-        WaitSecs(frameTime);
-    end
     blockInstructions(window, instructions2, white, spaceKey, frameTime);
 end
 
@@ -154,23 +90,8 @@ for i = 1:f
         end
     end
 
-    % set means
-    if isLeft(i)
-        if stateGreen == true
-            Screen('FramePoly', window, green, [xPosLeft; yPos]', isConvex);
-            Screen('FramePoly', window, orange, [xPosRight; yPos]', isConvex);
-        end
-        sourceX = xCenterLeftTri;
-    else
-        if stateGreen == true
-            Screen('FramePoly', window, orange, [xPosLeft; yPos]', isConvex);
-            Screen('FramePoly', window, green, [xPosRight; yPos]', isConvex);
-        end
-        sourceX = xCenterRightTri;
-    end
-
-    targetX = getValidTargetX(sourceX, leftBound, rightBound, stdHrz, ...
-        wideRange, halfDist, xCenterLeftTri, xCenterRightTri);
+    targetX = getValidTargetX(sourceX(f), leftBound, rightBound, stdHrz, ...
+        wideRange, halfDist, xCenterLeft, xCenterRight);
 
     % record the source and target position
     targetY = normrnd(yCenterTri, stdVert);
@@ -191,7 +112,7 @@ for i = 1:f
     end
 
     % flip screen
-    if f ==1
+    if f == 1
         vbl = Screen('Flip', window);
     else
         vbl = Screen('Flip', window, vbl + frameTime - slack);
@@ -199,8 +120,6 @@ for i = 1:f
 
     stimOnset = vbl;
     data(frameNum).stimOnset = stimOnset - blockStart;
-
-    %KbQueueFlush([], 1); %%%%%
 
     % check for key presses
     [pressed, firstPress] = KbQueueCheck();
@@ -210,14 +129,10 @@ for i = 1:f
 
     isFirst = (i == 1);
 
-
-    %while GetSecs() < frameStart + frameTime
-    %    [pressed, secs, keyCode] = KbCheck;
-
     keyIdx = find(firstPress);
     if ~isempty(keyIdx)
         keyName = KbName(keyIdx(1));
-        responseTime = firstPress(keyIdx(1)) - switchTime; %stimOnset;
+        responseTime = firstPress(keyIdx(1)) - switchTime;
         keypressTime = firstPress(keyIdx(1)) - blockStart;
         if strcmpi(keyName, 'F')
             keyPressed = 'F';
@@ -250,9 +165,9 @@ for i = 1:f
     data(frameNum).responseTime = responseTime;
     data(frameNum).trialEndTime = GetSecs() - blockStart;
 
-    % set appropriate border around triangles for block 2
-    drawBlockTriangles(bl, window, beliefSelection, xPosLeft, xPosRight, ...
-        yPos, green, orange, isConvex, defTriCol);
+    % set appropriate border around triangles
+    drawBeliefTriangles(window, beliefSelection, xPosLeft, ...
+                xPosRight, yPos, green, orange, isConvex, defTriCol);
 
     % draw triangles
     Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);

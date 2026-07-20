@@ -1,8 +1,3 @@
-
-
-
-
-
 % smaller triangles
 % less vert std
 % proportionally scale standard deviation based on how many standard
@@ -27,12 +22,10 @@ smuPath = 'C:/Users/mattLab/Brown Dropbox/Matthew Nassar/ALP_Summer2022/sharedMa
 addpath(genpath(smuPath));
 
 % set up eyetracking
-doingEyetracking = 1; 
-halfDist = 1;
-wideRange = 0;
+doingEyetracking = 0;
 
-if doingEyetracking 
-    cd('C:/Users/mattLab/Downloads/task/task') % need to update this 
+if doingEyetracking
+    cd('C:/Users/mattLab/Downloads/task/task') % need to update this
     ioObject = io64;
     LPT1address = hex2dec('3FB8');
     status = io64(ioObject);
@@ -78,7 +71,7 @@ end
 % define window
 if ~doingEyetracking
     Screen('Preference', 'SkipSyncTests', 1);
-end      
+end
 
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, grey, ...
     [xOffset, yOffset, xOffset + newWidth, yOffset + newHeight]);
@@ -91,7 +84,7 @@ vbl = Screen('Flip', window);
 KbQueueCreate();
 
 % more eyetracking setup
-if doingEyetracking 
+if doingEyetracking
     % Initialize Eyelink with window-specific defaults FIRST
     el = EyelinkInitDefaults(window);
 
@@ -127,7 +120,7 @@ if doingEyetracking
     Eyelink('StartRecording');
 
 
- %{
+    %{
     [el] = EyelinkSetup(1,window)
     Eyelink('Openfile', eyeFileName);
     Eyelink('StartRecording');
@@ -136,13 +129,12 @@ if doingEyetracking
     io64(ioObject,LPT1address,0);
     % define windowRect if needed
 
- %}
+    %}
 
 end
 
 % define the centers of the window
 [xCenter, yCenter] = RectCenter(windowRect);
-%ifi = Screen('GetFlipInterval', window);
 
 %% Triangle Setup
 % define triangle parameters
@@ -150,53 +142,39 @@ numSides = 3;
 anglesDeg = linspace(270, 630, numSides + 1);
 anglesRad = anglesDeg * (pi / 180);
 radius = 15;
-baseSep = 0.5 * newWidth;
-baseMult = 1.5;
 
 % define relevant x values
-x0 = xCenter - (3 * (newWidth/4)); % one quarter to the left of window edge
 x1 = xCenter - (2 * (newWidth/4)); % left window edge
 x3 = xCenter + (2 * (newWidth/4)); % right window edge
 
 % set position of both triangles
-if wideRange
-    xCenterLeftTri = x1;
-    xCenterRightTri = x3;
-else                                                     
-    if doingEyetracking %%%%%
-        xCenterLeftTri = newWidth / 8;
-        xCenterRightTri = 7 *(newWidth / 8);
-    else
-        xCenterLeftTri = xOffset - (newWidth / 3);
-        xCenterRightTri = xOffset + (newWidth / 3 );
-    end
+if doingEyetracking %%%%%
+    xCenterLeft = newWidth / 8;
+    xCenterRight = 7 *(newWidth / 8);
+else
+    xCenterLeft = xOffset - (newWidth / 3);
+    xCenterRight = xOffset + (newWidth / 3 );
 end
 
-% randomly generate 10000 integers in the range that the target should
-% appear most when left triangle is source
-numListLeft = randi([round(x1), round(x3)], 1, 10000);
-diff = xCenterRightTri - xCenterLeftTri;
-multiplier = baseMult * (diff/baseSep);
+sep = xCenterRight - xCenterLeft;
 
-% use this for the horizontal standard deviation
-stdHrz = newWidth/5.5; %285; % std(numListLeft) * multiplier; ---- 1000 for big screen
-% /6 for easier, /4 for harder
+% use this for the horizontal standard deviation 
+stdHrz = sep ./ [3.0, 2.4, 1.8, 1.2, 1.0]; 
 stdVert = newHeight / 36;
 
-data(1).std = stdHrz;
-data(1).centers = xCenterLeftTri;
-data(2).centers = xCenterRightTri;
+data(1).centers = xCenterLeft;
+data(2).centers = xCenterRight;
 
 yCenterTri = yCenter;
-xPosLeft = cos(anglesRad) * radius + xCenterLeftTri;
-xPosRight = cos(anglesRad) * radius + xCenterRightTri;
+xPosLeft = cos(anglesRad) * radius + xCenterLeft;
+xPosRight = cos(anglesRad) * radius + xCenterRight;
 yPos = sin(anglesRad) * radius + yCenterTri;
 isConvex = 1;
 
 %% frame Setup
-numBlk = 3; % blocks
+numBlk = 2; % blocks
 numFr = 6000; % frames (should be 12000)
-H = 0.003; % hazard rate
+Hs = [0.003, 0.01]; % hazard rate (switch every 17s, switch every 5s
 frameTime = 0.05; % length of each frame (seconds)
 
 % set up target and distractor text
@@ -205,14 +183,8 @@ distractor = 'L';
 numDistractors = 20;
 Screen('TextFont', window, 'Arial');
 
-% set up bounds
-if halfDist || wideRange
-    leftBound = xCenterLeftTri;
-    rightBound = xCenterRightTri;
-else
-    leftBound = x1;
-    rightBound = x3;
-end
+leftBound = xCenterLeft;
+rightBound = xCenterRight;
 
 % set up keypress
 KbName('UnifyKeyNames');
@@ -220,9 +192,9 @@ leftKey = KbName('F');
 rightKey = KbName('J');
 spaceKey = KbName('space');
 
-instructions(window, newWidth, newHeight, xCenterLeftTri, xCenterRightTri, yCenterTri, ...
+instructions(window, newWidth, newHeight, xCenterLeft, xCenterRight, yCenterTri, ...
     stdHrz, stdVert, xPosLeft, xPosRight, yPos, isConvex, frameTime, spaceKey, ...
-    leftBound, rightBound, wideRange, halfDist);
+    leftBound, rightBound);
 
 %% Main Loop
 % initialize frame number per block
@@ -233,19 +205,14 @@ showAccuracy = 0;
 endAudio = 0;
 
 for bl = 1:numBlk
+    H = Hs(bl);
 
     % define parameters that change throughout blocks
     switch bl
         case 1
-            % state lights up
             training = true;
-            stateGreen = false;
-            beliefGreen = true;
-            halfDist = 1;
-            wideRange = 0;
             iterations = 3;
             f = 2400;
-            stdHrz = newWidth/5.5;
             instructions1 = ['In this first block, the triangle that is\n\n' ...
                 'currently generating the target will have a green outline.\n\n' ...
                 'The target itself will be red like the distractors, so you\n\n' ...
@@ -261,14 +228,8 @@ for bl = 1:numBlk
                 'should press ''F'' when the left triangle is outlined and ''J'' \n\n' ...
                 'when the right triangle is outlined. Press space to begin.'];
         case 2
-            % belief lights up
-            stateGreen = false;
-            beliefGreen = true;
-            halfDist = 1;
-            wideRange = 0;
             iterations = 1;
             f = numFr;
-            stdHrz = newWidth/5.5;
             instructions1 = ['This block is identical to the final segment of the\n\n' ...
                 'training block. You will not be told your accuracy at the end\n\n' ...
                 'of the trial. Everything else remains the same.\n\n' ...
@@ -280,14 +241,8 @@ for bl = 1:numBlk
                 'necessary throughout the task. You do not need to hold keys.\n\n' ...
                 'This will last five minutes. Press space to begin.'];
         case 3
-            % neither lights up
-            stateGreen = false;
-            beliefGreen = true;
-            halfDist = 1;
-            wideRange = 0;
             iterations = 1;
             f = numFr;
-            stdHrz = newWidth/4;
             instructions1 = ['This final block is similar to the previous \n\n' ...
                 'one. However, each source has a wider area that the target\n\n' ...
                 'may generate in now. Press space to see an example of how\n\n' ...
@@ -304,16 +259,15 @@ for bl = 1:numBlk
         [data, frameNum, accuracyData] = trainingBlock(window, f, bl, frameNum, data, ...
             white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
             anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
-            H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, ...
-            beliefGreen, stateGreen, halfDist, wideRange, vbl);
+            H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, vbl);
     else
         givingFeedback = 0;
         [data, frameNum, accuracy] = runTrials(window, f, bl, frameNum, data, ...
             white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
             anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
             H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, ...
-            beliefGreen, stateGreen, halfDist, wideRange, givingFeedback, instructions1, ...
-            instructions2, showInstruction, showAccuracy, vbl, endAudio);
+            givingFeedback, instructions1, instructions2, showInstruction, ...
+            showAccuracy, vbl, endAudio);
     end
 end
 
@@ -328,7 +282,7 @@ end
 sca;
 KbQueueRelease();
 %% Save Eye Data
-if doingEyetracking 
+if doingEyetracking
     try
         fprintf('Receiving data file ''%s''\n', eyeFileName );
         status=Eyelink('ReceiveFile');
