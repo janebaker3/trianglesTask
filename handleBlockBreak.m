@@ -32,7 +32,6 @@ KbReleaseWait;
 while waitForEnter
     [keyIsDown, ~, keyCode] = KbCheck;
     if keyIsDown && any(keyCode(enterKey))
-        %if keyIsDown && keyCode(enterKey)
         waitForEnter = false;
         KbReleaseWait;
     end
@@ -43,9 +42,4 @@ if doingEyetracking
     Eyelink('StartRecording');
 end
 WaitSecs(frameTime);
-% else
-%     Screen('FillRect', window, grey);
-%     Screen('Flip', window);
-%     WaitSecs(3);
-% end
 end

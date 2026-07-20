@@ -1,7 +1,7 @@
 function tx = getValidTargetX(sourceX, leftBound, rightBound, stdHrz, ...
-                                wideRange, halfDist, xCenterLeftTri, xCenterRightTri)
+                                wideRange, halfDist, xCenterLeft, ~)
 if wideRange || halfDist
-    if sourceX == xCenterLeftTri
+    if sourceX == xCenterLeft
         direction = +1; 
     else
         direction = -1; 
