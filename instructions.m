@@ -52,18 +52,7 @@ while ~nextDemo
 end
 
 %% source demonstration
-rightDemo = false; % indicates when to move on
-nextDemo = false;
-targetX = zeros(1, 100);
-targetY = zeros(1, 100);
-for t = 1:100
-    targetX(t) = getValidTargetX(xCenterLeftTri, leftBound, rightBound, stdHrz, ...
-        wideRange, halfDist, xCenterLeftTri, xCenterRightTri);
-    targetY(t) = normrnd(yCenterTri, stdVert);
-end
-
 % show demo until space is pressed
-
 textTop = ['This is a distribution that targets are selected\n\n' ...
     'from when the left triangle is the source. It may appear\n\n' ...
     'that the target is ''moving'' in a specific direction\n\n' ... 
@@ -73,29 +62,9 @@ textBottom = ['A new target position is selected from this\n\n ' ...
     'distribution every frame (every 50 milliseconds). \n\n' ...
     'Press space to continue.'];
 
-while ~nextDemo
-    % add text
-    DrawFormattedText(window, textTop, 'center', 50, white);
-    DrawFormattedText(window, textBottom, 'center', newHeight - 125, white);
-
-    % draw triangles
-    Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);
-    Screen('FillPoly', window, defTriCol, [xPosRight; yPos]', isConvex);
-
-    % draw targets
-    for t = 1:100
-        DrawFormattedText(window, 'T', targetX(t), targetY(t), red);
-    end
-    Screen('Flip', window);
-
-    % check for keypress and switch to right demo when space is pressed
-    [keyIsdown, ~, keyCode] = KbCheck;
-    if keyIsdown && keyCode(spaceKey)
-        nextDemo = true;
-        KbReleaseWait;
-    end
-end
-WaitSecs(frameTime);
+drawDist(sourceX, leftBound, rightBound, stdHrz, xCenterLeft, xCenterRight, ...
+    window, textTop, textBottom, white, newHeight, defTriCol, xPosLeft, xPosRight, ...
+    yPos, isConvex, red, spaceKey)
 
 % define text to appear
 textTop = ['This is an example of how the target will be generated\n\nwhen' ...
@@ -135,16 +104,6 @@ while ~rightDemo
    WaitSecs(frameTime);
 end
 
-demoOver = false; % indicates when to move on
-nextDemo = false;
-targetX = zeros(1, 100);
-targetY = zeros(1, 100);
-for t = 1:100
-    targetX(t) = getValidTargetX(xCenterRightTri, leftBound, rightBound, stdHrz, ...
-        wideRange, halfDist, xCenterLeftTri, xCenterRightTri);
-    targetY(t) = normrnd(yCenterTri, stdVert);
-end
-
 % define new text to appear
 textTop = ['This is a distribution that targets are selected\n\n' ...
     'from when the right triangle is the source. It may appear\n\n' ...
@@ -155,29 +114,9 @@ textBottom = ['A new target position is selected from this\n\n ' ...
     'distribution every frame (every 50 milliseconds). \n\n' ...
     'Press space to continue.'];
 
-while ~nextDemo
-    % add text
-    DrawFormattedText(window, textTop, 'center', 50, white);
-    DrawFormattedText(window, textBottom, 'center', newHeight - 125, white);
-
-    % draw triangles
-    Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);
-    Screen('FillPoly', window, defTriCol, [xPosRight; yPos]', isConvex);
-
-    % draw targets
-    for t = 1:100
-        DrawFormattedText(window, 'T', targetX(t), targetY(t), red);
-    end
-    Screen('Flip', window);
-
-    % check for keypress and switch to right demo when space is pressed
-    [keyIsdown, ~, keyCode] = KbCheck;
-    if keyIsdown && keyCode(spaceKey)
-        nextDemo = true;
-        KbReleaseWait;
-    end
-end
-WaitSecs(frameTime);
+drawDist(sourceX, leftBound, rightBound, stdHrz, xCenterLeft, xCenterRight, ...
+    window, textTop, textBottom, white, newHeight, defTriCol, xPosLeft, xPosRight, ...
+    yPos, isConvex, red, spaceKey)
 
 textTop = ['This is an example of how the target will be generated\n\nwhen' ...
    ' the right triangle is the source. Press space to continue.'];
