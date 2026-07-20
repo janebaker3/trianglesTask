@@ -12,7 +12,7 @@ KbQueueStart();
 beliefSelection = ' ';
 accuracyCounter = 0;
 
-%% audio 
+%% audio
 if givingFeedback
     % Make sure Psychtoolbox is properly initialized
     InitializePsychSound(1); % 1 = low latency mode
@@ -40,7 +40,7 @@ if givingFeedback
     isPlaying = false;
 end
 
-%% 
+%%
 switchTime = 0;
 
 % change states according to the hazard rate
@@ -58,14 +58,40 @@ sourceX = zeros(1, f);
 sourceX(isLeft) = xCenterLeft;
 sourceX(~isLeft) = xCenterRight;
 
+%% create per-frame horizontal SD schedule
+minFrames = 100;   % 5 s
+meanFrames = 200;  % 10 s
+maxFrames = 600;   % 30 s
+
+stdSchedule = zeros(1, f);
+stdIndexSchedule = zeros(1, f);
+
+currentStdIdx = 1;   % first SD is stdHrz(1)
+currentFrame = 1;
+
+while currentFrame <= f
+    % assign current SD until next switch
+    sample = sampleExpDist(minFrames, meanFrames, maxFrames);
+
+    endFrame = min(f, currentFrame + sample - 1);
+    stdSchedule(currentFrame:endFrame) = stdHrz(currentStdIdx);
+    stdIndexSchedule(currentFrame:endFrame) = currentStdIdx;
+
+    % choose next SD index with no repetition
+    availableIdx = setdiff(1:length(stdHrz), currentStdIdx);
+    currentStdIdx = availableIdx(randi(length(availableIdx)));
+
+    currentFrame = endFrame + 1;
+end
+
 if showInstruction
     % go through instructions at the beginning of each block
     blockInstructions(window, instructions1, white, spaceKey, frameTime);
     if showDist
         textBottom = 'Press space to continue.';
         for d = 1:length(stdHrz)
-            textTop = sprintf('Possible Distribution %d', d);
-            drawDist(sourceX, leftBound, rightBound, stdHrz(d), xCenterLeft, xCenterRight, ...
+            textTop = sprintf('Possible Distribution %d For Left Source', d);
+            drawDist(xCenterLeft, leftBound, rightBound, stdHrz(d), xCenterLeft, xCenterRight, ...
                 window, textTop, textBottom, white, newHeight, defTriCol, xPosLeft, xPosRight, ...
                 yPos, isConvex, red, spaceKey)
         end
@@ -97,20 +123,24 @@ for i = 1:f
         end
     end
 
-    targetX = getValidTargetX(sourceX(f), leftBound, rightBound, stdHrz, ...
-        wideRange, halfDist, xCenterLeft, xCenterRight);
+    currStdHrz = stdSchedule(i);
+
+    targetX = getValidTargetX(sourceX(i), leftBound, rightBound, currStdHrz, ...
+        xCenterLeft, xCenterRight);
 
     % record the source and target position
     targetY = normrnd(yCenterTri, stdVert);
     data(frameNum).sourceIsLeft = isLeft(i);
     data(frameNum).targetX = targetX;
     data(frameNum).targetY = targetY;
+    data(frameNum).stdHrz = currentStdHrz;
+    data(frameNum).stdHrzIdx = stdIndexSchedule(i);
 
     % draw target
     DrawFormattedText(window, target, targetX, targetY, red);
 
     % draw distractors
-    distractorPos = zeros(5, 2);
+    distractorPos = zeros(numDistractors, 2);
     for d = 1:numDistractors
         dx = randi([1, newWidth]);
         dy = normrnd(yCenterTri, stdVert);
@@ -143,15 +173,11 @@ for i = 1:f
         keypressTime = firstPress(keyIdx(1)) - blockStart;
         if strcmpi(keyName, 'F')
             keyPressed = 'F';
-            if beliefGreen
-                beliefSelection = 'left';
-            end
+            beliefSelection = 'left';
             logEyetrackMessage(doingEyetracking, 'BELIEF_IS_LEFT');
         elseif strcmpi(keyName, 'J')
             keyPressed = 'J';
-            if beliefGreen
-                beliefSelection = 'right';
-            end
+            beliefSelection = 'right';
             logEyetrackMessage(doingEyetracking, 'BELIEF_IS_RIGHT');
         else
             if frameNum > 1 && ~isFirst
@@ -174,7 +200,7 @@ for i = 1:f
 
     % set appropriate border around triangles
     drawBeliefTriangles(window, beliefSelection, xPosLeft, ...
-                xPosRight, yPos, green, orange, isConvex, defTriCol);
+        xPosRight, yPos, green, orange, isConvex, defTriCol);
 
     % draw triangles
     Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);
@@ -205,4 +231,20 @@ handleBlockBreak(window, bl, white, frameTime, doingEyetracking, grey, ...
 
 %% Save data
 save('myResult.mat', 'data');
+end
+
+function sample = sampleExpDist(minFrames, meanFrames, maxFrames)
+% exponential component beyond the minimum
+scale = meanFrames - minFrames;
+
+accepted = false;
+while ~accepted
+    sample = minFrames + exprnd(scale);
+    if sample <= maxFrames
+        accepted = true;
+    end
+end
+
+sample = round(sample);
+
 end
