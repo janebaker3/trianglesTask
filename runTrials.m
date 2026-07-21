@@ -1,10 +1,10 @@
 function [data, frameNum, accuracy] = runTrials(window, f, bl, frameNum, data, ...
-    white, grey, green, orange, red, defTriCol, showDist, ...
-    x1, x3, xOffset, yCenterTri, anglesRad, radius, isConvex, newWidth, ...
-    frameTime, slack, numDistractors, H, spaceKey, stdHrz, stdVert, ...
-    doingEyetracking, target, distractor,givingFeedback, instructions1, ...
-    instructions2, showInstruction, showAccuracy, vbl, endAudio, ...
-    xCenterLeft, xCenterRight, leftBound, rightBound, xPosLeft, xPosRight, yPos)
+    white, grey, green, orange, red, defTriCol, showDist, x1, x3, xOffset, yCenterTri, ...
+    anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
+    H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, ...
+    givingFeedback, instructions1, instructions2, showInstruction, ...
+    showAccuracy, vbl, endAudio, xCenterLeft, xCenterRight, leftBound, ...
+    rightBound, xPosLeft, xPosRight, yPos)
 
 KbQueueFlush();
 KbQueueStart();
@@ -55,8 +55,8 @@ for j = 2:f
 end
 
 sourceX = zeros(1, f);
-sourceX(isLeft) = xCenterLeft;
-sourceX(~isLeft) = xCenterRight;
+sourceX(find(isLeft)) = xCenterLeft;
+sourceX(find(~isLeft)) = xCenterRight;
 
 %% create per-frame horizontal SD schedule
 minFrames = 100;   % 5 s
@@ -93,7 +93,7 @@ if showInstruction
             textTop = sprintf('Possible Distribution %d For Left Source', d);
             drawDist(xCenterLeft, leftBound, rightBound, stdHrz(d), xCenterLeft, xCenterRight, ...
                 window, textTop, textBottom, white, newHeight, defTriCol, xPosLeft, xPosRight, ...
-                yPos, isConvex, red, spaceKey)
+                yPos, isConvex, red, spaceKey, yCenterTri, stdVert, frameTime)
         end
     end
     blockInstructions(window, instructions2, white, spaceKey, frameTime);
@@ -133,7 +133,7 @@ for i = 1:f
     data(frameNum).sourceIsLeft = isLeft(i);
     data(frameNum).targetX = targetX;
     data(frameNum).targetY = targetY;
-    data(frameNum).stdHrz = currentStdHrz;
+    data(frameNum).stdHrz = currStdHrz;
     data(frameNum).stdHrzIdx = stdIndexSchedule(i);
 
     % draw target
