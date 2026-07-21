@@ -1,13 +1,3 @@
-% smaller triangles
-% less vert std
-% proportionally scale standard deviation based on how many standard
-% deviations the means change
-
-
-%{
-put instructions that "motion" of t from left to right is irrelevant
-%}
-
 %% Setup
 sca;
 close all;
@@ -193,7 +183,7 @@ rightKey = KbName('J');
 spaceKey = KbName('space');
 
 instructions(window, newWidth, newHeight, xCenterLeft, xCenterRight, yCenterTri, ...
-    stdHrz, stdVert, xPosLeft, xPosRight, yPos, isConvex, frameTime, spaceKey, ...
+    stdHrz(1), stdVert, xPosLeft, xPosRight, yPos, isConvex, frameTime, spaceKey, ...
     leftBound, rightBound);
 
 %% Main Loop
@@ -212,12 +202,12 @@ for bl = 1:numBlk
         case 1
             training = true;
             iterations = 3;
-            f = 2400;
+            f = 60;%2400;
             instructions1 = 'Not used';
             instructions2 = 'Not used';
         case 2
             iterations = 1;
-            f = numFr;
+            f = 60;%numFr;
             showDist = 1;
             instructions1 = ['This is the beginning of the task. You previously saw one of the\n\n' ...
                 'distributions that the target can be generated from. Now, the\n\n' ...
@@ -232,7 +222,7 @@ for bl = 1:numBlk
                 'This will last five minutes. Press space to begin.'];
         case 3
             iterations = 1;
-            f = numFr;
+            f = 60;%numFr;
             showDist = 0;
             instructions1 = ['This final block is similar to the previous \n\n' ...
                 'one. However, the source will switch more often than it\n\n' ...
@@ -248,7 +238,7 @@ for bl = 1:numBlk
     if bl == 1
         [data, frameNum, accuracyData] = trainingBlock(window, f, bl, frameNum, data, ...
             white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
-            anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
+            anglesRad, radius, isConvex, newWidth, frameTime, slack, numDistractors, ...
             H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, vbl);
     else
         givingFeedback = 0;

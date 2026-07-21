@@ -1,6 +1,6 @@
 function drawDist(sourceX, leftBound, rightBound, stdHrz, xCenterLeft, xCenterRight, ...
     window, textTop, textBottom, white, newHeight, defTriCol, xPosLeft, xPosRight, ...
-    yPos, isConvex, red, spaceKey)
+    yPos, isConvex, red, spaceKey, yCenterTri, stdVert, frameTime)
 
 stopDemo = false; % indicates when to move on
 
