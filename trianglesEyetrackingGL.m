@@ -2,6 +2,7 @@
 sca;
 close all;
 clear;
+clear functions
 clc;
 
 warning('off', 'all');
@@ -58,7 +59,8 @@ if ~doingEyetracking
     Screen('Preference', 'SkipSyncTests', 1);
 end
 
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, grey, ...
+blue = [0 0 255];
+[window, windowRect] = PsychImaging('OpenWindow', screenNumber, blue, ...
     [xOffset, yOffset, xOffset + newWidth, yOffset + newHeight]);
 
 ifi = Screen('GetFlipInterval', window);

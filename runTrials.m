@@ -125,6 +125,18 @@ for i = 1:f
 
     currStdHrz = stdSchedule(i);
 
+    tex = getDistributionTexture(window, 'both', currStdHrz, stdVert, ...
+        xCenterLeft, xCenterRight, yCenterTri, leftBound, rightBound, newHeight);
+    Screen('DrawTexture', window, tex, [], [leftBound, 0, rightBound, newHeight]);
+
+    % set appropriate border around triangles
+    drawBeliefTriangles(window, beliefSelection, xPosLeft, ...
+        xPosRight, yPos, green, orange, isConvex, defTriCol);
+
+    % draw triangles
+    Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);
+    Screen('FillPoly', window, defTriCol, [xPosRight; yPos]', isConvex);
+
     targetX = getValidTargetX(sourceX(i), leftBound, rightBound, currStdHrz, ...
         xCenterLeft, xCenterRight);
 
@@ -197,14 +209,6 @@ for i = 1:f
     data(frameNum).keypressTime = keypressTime;
     data(frameNum).responseTime = responseTime;
     data(frameNum).trialEndTime = GetSecs() - blockStart;
-
-    % set appropriate border around triangles
-    drawBeliefTriangles(window, beliefSelection, xPosLeft, ...
-        xPosRight, yPos, green, orange, isConvex, defTriCol);
-
-    % draw triangles
-    Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);
-    Screen('FillPoly', window, defTriCol, [xPosRight; yPos]', isConvex);
 
     if givingFeedback
         isPlaying = genNoise(isLeft(i), keyPressed, isPlaying, 0, pahandle);

@@ -12,7 +12,17 @@ for t = 1:100
     targetY(t) = normrnd(yCenterTri, stdVert);
 end
 
+if sourceX == xCenterLeft
+    distMode = 'left';
+else
+    distMode = 'right';
+end
+
 while ~stopDemo
+    tex = getDistributionTexture(window, distMode, stdHrz, stdVert, ...
+        xCenterLeft, xCenterRight, yCenterTri, leftBound, rightBound, newHeight);
+    Screen('DrawTexture', window, tex, [], [leftBound, 0, rightBound, newHeight]);
+
     % add text
     DrawFormattedText(window, textTop, 'center', 50, white);
     DrawFormattedText(window, textBottom, 'center', newHeight - 125, white);
