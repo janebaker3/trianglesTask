@@ -11,5 +11,3 @@ function blockInstructions(window, message, white, spaceKey, frameTime)
         WaitSecs(frameTime);
     end
 end
-
-
