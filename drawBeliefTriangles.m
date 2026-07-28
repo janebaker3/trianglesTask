@@ -1,14 +1,22 @@
 function drawBeliefTriangles(window, beliefSelection, xPosLeft, xPosRight, yPos, green, orange, isConvex, defTriCol)
+    black = [0 0 0];
+
     if strcmp(beliefSelection, 'left')
-        Screen('FramePoly', window, green, [xPosLeft; yPos]', 2);
-        Screen('FramePoly', window, orange, [xPosRight; yPos]', 2);
+        leftColor = green; rightColor = orange;
     elseif strcmp(beliefSelection, 'right')
-        Screen('FramePoly', window, orange, [xPosLeft; yPos]', 2);
-        Screen('FramePoly', window, green, [xPosRight; yPos]', 2);
+        leftColor = orange; rightColor = green;
     else
-        Screen('FramePoly', window, orange, [xPosLeft; yPos]', 2);
-        Screen('FramePoly', window, orange, [xPosRight; yPos]', 2);
+        leftColor = orange; rightColor = orange;
     end
-    Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', 2);
-    Screen('FillPoly', window, defTriCol, [xPosRight; yPos]', 2);
+
+    % black outline first (slightly thicker)
+    Screen('FramePoly', window, black, [xPosLeft; yPos]', 4);
+    Screen('FramePoly', window, black, [xPosRight; yPos]', 4);
+
+    % colored indicator on top (thinner, sits inside the black border)
+    Screen('FramePoly', window, leftColor, [xPosLeft; yPos]', 2);
+    Screen('FramePoly', window, rightColor, [xPosRight; yPos]', 2);
+
+    Screen('FillPoly', window, defTriCol, [xPosLeft; yPos]', isConvex);
+    Screen('FillPoly', window, defTriCol, [xPosRight; yPos]', isConvex);
 end

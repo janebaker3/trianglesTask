@@ -21,24 +21,37 @@ yRange = 0:round(newHeight);
 leftDensity = normpdf(X, xCenterLeft, stdHrzVal) .* normpdf(Y, yCenterTri, stdVert);
 rightDensity = normpdf(X, xCenterRight, stdHrzVal) .* normpdf(Y, yCenterTri, stdVert);
 
+lightGreen = [0, 255, 0];
+blue = [0, 0, 255];
+yellow = [255, 255, 0];
+
+leftNorm = leftDensity / max(leftDensity(:));
+rightNorm = rightDensity / max(rightDensity(:));
+
 switch mode
     case 'left'
-        density = leftDensity;
+        w = leftNorm;
+        img = zeros(size(w,1), size(w,2), 3, 'uint8');
+        for c = 1:3
+            img(:,:,c) = uint8(blue(c) + w * (lightGreen(c) - blue(c)));
+        end
     case 'right'
-        density = rightDensity;
+        w = rightNorm;
+        img = zeros(size(w,1), size(w,2), 3, 'uint8');
+        for c = 1:3
+            img(:,:,c) = uint8(blue(c) + w * (lightGreen(c) - blue(c)));
+        end
     case 'both'
-        density = leftDensity + rightDensity;
-end
+        singleW = max(leftNorm, rightNorm);
+        overlapW = min(leftNorm, rightNorm);
 
-density = density - min(density(:));
-maxVal = max(density(:));
-if maxVal > 0
-    density = density / maxVal;
+        img = zeros(size(singleW,1), size(singleW,2), 3, 'uint8');
+        for c = 1:3
+            base = blue(c) + singleW * (lightGreen(c) - blue(c));
+            blended = base + overlapW .* (yellow(c) - base);
+            img(:,:,c) = uint8(blended);
+        end
 end
-
-img = zeros(size(density, 1), size(density, 2), 3, 'uint8');
-img(:,:,2) = uint8(density * 255);        % green increases with density
-img(:,:,3) = uint8((1 - density) * 255);  % blue decreases with density
 
 tex = Screen('MakeTexture', window, img);
 texCache(key) = tex;
