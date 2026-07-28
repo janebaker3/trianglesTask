@@ -7,22 +7,17 @@ clc;
 warning('off', 'all');
 Screen('Preference', 'SuppressAllWarnings', 1);
 Screen('Preference', 'VisualDebugLevel', 3);
-Snd('Close')
-smuPath = 'C:/Users/mattLab/Brown Dropbox/Matthew Nassar/ALP_Summer2022/sharedMatlabUtilities/eeglab2024.2.1';
-addpath(genpath(smuPath));
 
 % set up eyetracking
 doingEyetracking = 0;
 
-if doingEyetracking
-    cd('C:/Users/mattLab/Downloads/task/task') % need to update this
-    ioObject = io64;
-    LPT1address = hex2dec('3FB8');
-    status = io64(ioObject);
-    eyeFileName = 'p4';
+if doingEyetracking 
+    cd('C:\Users\jigol\Desktop\newTaskVersion')
+    eyeFileName = 'stuff.edf';
     warning('off', 'all');
     PsychDefaultSetup(2);
-    Screen('Preference', 'SkipSyncTests', 1);
+    Screen('Preference', 'SkipSyncTests', 0);
+    %Eyelink('Initialize');
 
     % DEBUGGING
     if ~EyelinkInit()
@@ -75,52 +70,48 @@ KbQueueCreate();
 
 % more eyetracking setup
 if doingEyetracking
-    % Initialize Eyelink with window-specific defaults FIRST
     el = EyelinkInitDefaults(window);
-
-    % Fill and flip the screen to make sure it's visible to the Eyelink host
     Screen('FillRect', window, el.backgroundcolour);
     Screen('Flip', window);
 
-    % Initialize Eyelink connection
-    if ~EyelinkInit()
-        fprintf('Eyelink Init failed.\n');
+    result = EyelinkInit();
+    fprintf('EyelinkInit() returned: %d\n', result);
+    fprintf('IsConnected after Init: %d\n', Eyelink('IsConnected'));
+
+    if result ~= 1
+        fprintf('Eyelink Init failed — aborting.\n');
+        sca;
         return;
     end
 
-    % Open the EDF file
     status = Eyelink('OpenFile', eyeFileName);
+    fprintf('OpenFile status: %d\n', status);
     if status ~= 0
         fprintf('Failed to open EDF file.\n');
+        sca;
         return;
     end
 
-    % Set up tracker configuration
     Eyelink('Command', 'screen_pixel_coords = 0 0 %d %d', ScreenXpixels - 1, screenYpixels - 1);
     Eyelink('Command', 'calibration_type = HV9');
     Eyelink('Command', 'generate_default_targets = YES');
-    disp('5');
 
-    % Force tracker into setup mode (optional)
-    Eyelink('StartSetup');
-    WaitSecs(0.5);
+    fprintf('IsConnected before DoTrackerSetup: %d\n', Eyelink('IsConnected'));
 
-    % Launch the tracker setup (calibration, validation, etc.)
     EyelinkDoTrackerSetup(el);
-    Eyelink('StartRecording');
 
+    fprintf('IsConnected after DoTrackerSetup: %d\n', Eyelink('IsConnected'));
 
-    %{
-    [el] = EyelinkSetup(1,window)
-    Eyelink('Openfile', eyeFileName);
-    Eyelink('StartRecording');
-    io64(ioObject,LPT1address,1); %Trigger example 1
-    WaitSecs(0.01)
-    io64(ioObject,LPT1address,0);
-    % define windowRect if needed
+    err = Eyelink('CheckRecording');
+    fprintf('CheckRecording before StartRecording: %d\n', err);
 
-    %}
+    status = Eyelink('StartRecording');
+    fprintf('StartRecording status: %d\n', status);
 
+    if status ~= 0
+        fprintf('Eyelink error message: %s\n', Eyelink('CommandResult'));
+        fprintf('Last error: %s\n', Eyelink('GetLastError'));
+    end
 end
 
 % define the centers of the window
@@ -207,7 +198,7 @@ for bl = 1:numBlk
             instructions2 = 'Not used';
         case 2
             iterations = 1;
-            f = 60;%numFr;
+            f = numFr;
             showDist = 1;
             instructions1 = ['This is the beginning of the task. You previously saw one of the\n\n' ...
                 'distributions that the target can be generated from. Now, the\n\n' ...
@@ -222,7 +213,7 @@ for bl = 1:numBlk
                 'This will last five minutes. Press space to begin.'];
         case 3
             iterations = 1;
-            f = 60;%numFr;
+            f = numFr;
             showDist = 0;
             instructions1 = ['This final block is similar to the previous \n\n' ...
                 'one. However, the source will switch more often than it\n\n' ...
