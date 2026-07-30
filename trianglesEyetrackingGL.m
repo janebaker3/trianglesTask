@@ -63,6 +63,8 @@ blue = [0 0 255];
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, blue, ...
     [xOffset, yOffset, xOffset + newWidth, yOffset + newHeight]);
 
+Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA'); %
+
 ifi = Screen('GetFlipInterval', window);
 slack = ifi / 2;
 
