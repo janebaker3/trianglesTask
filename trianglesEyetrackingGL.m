@@ -143,7 +143,8 @@ end
 
 sep = xCenterRight - xCenterLeft;
 
-% use this for the horizontal standard deviation 
+% use this for the horizontal standard deviation
+% index 1 = Easy, index 2 = Medium, index 3 = Hard
 stdHrz = sep ./ [3.0, 1.8, 1.2]; 
 stdVert = newHeight / 36;
 
@@ -157,10 +158,14 @@ yPos = sin(anglesRad) * radius + yCenterTri;
 isConvex = 1;
 
 %% frame Setup
-numBlk = 3; % blocks
-numFr = 6000; % frames (should be 12000)
-Hs = [0.003, 0.003, 0.01]; % hazard rate (switch every 17s, switch every 5s
+numMainBlocks = 6; % 3 difficulty levels x 2 hazard rates
 frameTime = 0.05; % length of each frame (seconds)
+
+numFrTraining = round(120 / frameTime); % 2 minutes per training trial
+numFrMain = round(180 / frameTime); % 3 minutes per main block
+
+% hazard rate: index 1 = Less Frequent, index 2 = Frequent
+Hs = [0.003, 0.01];
 
 % set up target and distractor text
 target = 'T';
@@ -182,70 +187,87 @@ instructions(window, newWidth, newHeight, xCenterLeft, xCenterRight, yCenterTri,
     leftBound, rightBound);
 
 %% Main Loop
-% initialize frame number per block
+% initialize frame number across the whole session
 frameNum = 1;
 
 showInstruction = 1;
 showAccuracy = 0;
 endAudio = 0;
 
-for bl = 1:numBlk
-    H = Hs(bl);
+%% ---- Training block (bl = 1): Easy difficulty, Less Frequent hazard ----
+bl = 1;
+trainStdIdx = 1; % Easy
+trainHazIdx = 1; % Less Frequent
+H = Hs(trainHazIdx);
+trainStdHrz = stdHrz(trainStdIdx);
 
-    % define parameters that change throughout blocks
-    switch bl
-        case 1
-            training = true;
-            iterations = 3;
-            f = 60;%2400;
-            instructions1 = 'Not used';
-            instructions2 = 'Not used';
-        case 2
-            iterations = 1;
-            f = numFr;
-            showDist = 1;
-            instructions1 = ['This is the beginning of the task. You previously saw one of the\n\n' ...
-                'distributions that the target can be generated from. Now, the\n\n' ...
-                'distribution will switch among three possible distributions\n\n' ...
-                'Throughout the task. Everything else remains the same. \n\n' ...
-                'Press space to see these distributions.'];
-            instructions2 = ['Reminder: If you believe the **left** triangle is\n\n' ...
-                'generating the target, press the ''F'' key once. If you believe\n\n' ...
-                'the **right** triangle is generating the target, press the\n\n' ...
-                '''J'' key ONCE. You may do this as many times as you feel are\n\n' ...
-                'necessary throughout the task. You do not need to hold keys.\n\n' ...
-                'This will last five minutes. Press space to begin.'];
-        case 3
-            iterations = 1;
-            f = numFr;
-            showDist = 0;
-            instructions1 = ['This final block is similar to the previous \n\n' ...
-                'one. However, the source will switch more often than it\n\n' ...
-                'did previously. Press space to continue.'];
-            instructions2 = ['Reminder: If you believe the **left** triangle is\n\n' ...
-                'generating the target, press the ''F'' key once. If you believe\n\n' ...
-                'the **right** triangle is generating the target, press the\n\n' ...
-                '''J'' key once. You may do this as many times as you feel are\n\n' ...
-                'necessary throughout the task. You do not need to hold keys.\n\n' ...
-                'This will last five minutes. Press space to begin.'];
-    end
+[data, frameNum, accuracyData] = trainingBlock(window, numFrTraining, bl, frameNum, data, ...
+    white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
+    anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
+    H, spaceKey, trainStdHrz, trainStdIdx, trainHazIdx, stdVert, doingEyetracking, target, distractor, vbl, ...
+    xCenterLeft, xCenterRight, leftBound, rightBound, xPosLeft, xPosRight, yPos, numMainBlocks);
 
-    if bl == 1
-        [data, frameNum, accuracyData] = trainingBlock(window, f, bl, frameNum, data, ...
-            white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
-            anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
-            H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, vbl, ...
-            xCenterLeft, xCenterRight, leftBound, rightBound, xPosLeft, xPosRight, yPos);
-    else
-        givingFeedback = 0;
-        [data, frameNum, accuracy] = runTrials(window, f, bl, frameNum, data, ...
-            white, grey, green, orange, red, defTriCol, showDist, x1, x3, xOffset, yCenterTri, ...
-            anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
-            H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, ...
-            givingFeedback, instructions1, instructions2, showInstruction, ...
-            showAccuracy, vbl, endAudio, xCenterLeft, xCenterRight, leftBound, ...
-            rightBound, xPosLeft, xPosRight, yPos);
+%% ---- Explain difficulty levels and switching-frequency framing ----
+explainDifficultyAndHazard(window, stdHrz, xCenterLeft, xCenterRight, leftBound, rightBound, ...
+    yCenterTri, stdVert, xPosLeft, xPosRight, yPos, isConvex, defTriCol, red, white, spaceKey, ...
+    frameTime, newHeight);
+
+%% ---- Build randomized order of the 6 main blocks ----
+% combos: column 1 = std index (1 Easy, 2 Medium, 3 Hard)
+%         column 2 = hazard index (1 Less Frequent, 2 Frequent)
+combos = zeros(numMainBlocks, 2);
+c = 1;
+for s = 1:length(stdHrz)
+    for hz = 1:length(Hs)
+        combos(c, :) = [s, hz];
+        c = c + 1;
     end
+end
+
+isHard = combos(:, 1) == length(stdHrz); % hardest difficulty index
+nonHardIdx = find(~isHard);
+
+firstComboIdx = nonHardIdx(randi(length(nonHardIdx)));
+remainingComboIdx = setdiff(1:numMainBlocks, firstComboIdx);
+remainingComboIdx = remainingComboIdx(randperm(length(remainingComboIdx)));
+blockOrder = [firstComboIdx, remainingComboIdx];
+
+diffLabels = {'Easy', 'Medium', 'Hard'};
+hazLabels = {'Less Frequent', 'Frequent'};
+
+%% ---- Run the 6 main blocks ----
+for mb = 1:numMainBlocks
+    bl = mb + 1;
+    comboIdx = blockOrder(mb);
+    stdIdx = combos(comboIdx, 1);
+    hazIdx = combos(comboIdx, 2);
+
+    H = Hs(hazIdx);
+    currStdHrz = stdHrz(stdIdx);
+
+    diffLabel = diffLabels{stdIdx};
+    hazLabel = hazLabels{hazIdx};
+
+    instructions1 = sprintf(['This is the beginning of Block %d of %d.\n\n' ...
+        'In this block, the difficulty level is **%s** and the source will\n\n' ...
+        'switch at the **%s** rate.\n\n' ...
+        'Press space to continue.'], mb, numMainBlocks, diffLabel, hazLabel);
+
+    instructions2 = ['Reminder: If you believe the **left** triangle is\n\n' ...
+        'generating the target, press the ''F'' key once. If you believe\n\n' ...
+        'the **right** triangle is generating the target, press the\n\n' ...
+        '''J'' key once. You may do this as many times as you feel are\n\n' ...
+        'necessary throughout the task. You do not need to hold keys.\n\n' ...
+        'This will last three minutes. Press space to begin.'];
+
+    givingFeedback = 0;
+    [data, frameNum, accuracy] = runTrials(window, numFrMain, bl, mb, numMainBlocks, frameNum, data, ...
+        white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
+        anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
+        H, spaceKey, currStdHrz, stdIdx, hazIdx, stdVert, doingEyetracking, target, distractor, ...
+        givingFeedback, instructions1, instructions2, showInstruction, ...
+        showAccuracy, vbl, endAudio, xCenterLeft, xCenterRight, leftBound, ...
+        rightBound, xPosLeft, xPosRight, yPos);
 end
 
 if doingEyetracking

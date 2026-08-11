@@ -1,7 +1,7 @@
-function [data, frameNum, accuracy] = runTrials(window, f, bl, frameNum, data, ...
-    white, grey, green, orange, red, defTriCol, showDist, x1, x3, xOffset, yCenterTri, ...
+function [data, frameNum, accuracy] = runTrials(window, f, bl, mb, numMainBlocks, frameNum, data, ...
+    white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
     anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
-    H, spaceKey, stdHrz, stdVert, doingEyetracking, target, distractor, ...
+    H, spaceKey, currStdHrz, stdIdx, hazIdx, stdVert, doingEyetracking, target, distractor, ...
     givingFeedback, instructions1, instructions2, showInstruction, ...
     showAccuracy, vbl, endAudio, xCenterLeft, xCenterRight, leftBound, ...
     rightBound, xPosLeft, xPosRight, yPos)
@@ -58,44 +58,9 @@ sourceX = zeros(1, f);
 sourceX(find(isLeft)) = xCenterLeft;
 sourceX(find(~isLeft)) = xCenterRight;
 
-%% create per-frame horizontal SD schedule
-minFrames = 100;   % 5 s
-meanFrames = 200;  % 10 s
-maxFrames = 600;   % 30 s
-
-stdSchedule = zeros(1, f);
-stdIndexSchedule = zeros(1, f);
-
-currentStdIdx = 1;   % first SD is stdHrz(1)
-currentFrame = 1;
-
-while currentFrame <= f
-    % assign current SD until next switch
-    sample = sampleExpDist(minFrames, meanFrames, maxFrames);
-
-    endFrame = min(f, currentFrame + sample - 1);
-    stdSchedule(currentFrame:endFrame) = stdHrz(currentStdIdx);
-    stdIndexSchedule(currentFrame:endFrame) = currentStdIdx;
-
-    % choose next SD index with no repetition
-    availableIdx = setdiff(1:length(stdHrz), currentStdIdx);
-    currentStdIdx = availableIdx(randi(length(availableIdx)));
-
-    currentFrame = endFrame + 1;
-end
-
 if showInstruction
     % go through instructions at the beginning of each block
     blockInstructions(window, instructions1, white, spaceKey, frameTime);
-    if showDist
-        textBottom = 'Press space to continue.';
-        for d = 1:length(stdHrz)
-            textTop = sprintf('Possible Distribution %d For Left Source', d);
-            drawDist(xCenterLeft, leftBound, rightBound, stdHrz(d), xCenterLeft, xCenterRight, ...
-                window, textTop, textBottom, white, newHeight, defTriCol, xPosLeft, xPosRight, ...
-                yPos, isConvex, red, spaceKey, yCenterTri, stdVert, frameTime)
-        end
-    end
     blockInstructions(window, instructions2, white, spaceKey, frameTime);
 end
 
@@ -123,8 +88,6 @@ for i = 1:f
         end
     end
 
-    currStdHrz = stdSchedule(i);
-
     tex = getDistributionTexture(window, 'both', currStdHrz, stdVert, ...
         xCenterLeft, xCenterRight, yCenterTri, leftBound, rightBound, newHeight);
     Screen('DrawTexture', window, tex, [], [leftBound, 0, rightBound, newHeight]);
@@ -146,7 +109,9 @@ for i = 1:f
     data(frameNum).targetX = targetX;
     data(frameNum).targetY = targetY;
     data(frameNum).stdHrz = currStdHrz;
-    data(frameNum).stdHrzIdx = stdIndexSchedule(i);
+    data(frameNum).stdHrzIdx = stdIdx;
+    data(frameNum).H = H;
+    data(frameNum).hazardIdx = hazIdx;
 
     % draw target
     DrawFormattedText(window, target, targetX, targetY, red);
@@ -230,25 +195,9 @@ if endAudio
     isPlaying = genNoise(0, 'J', isPlaying, 1, pahandle);
 end
 
-handleBlockBreak(window, bl, white, frameTime, doingEyetracking, grey, ...
+handleBlockBreak(window, bl, mb, numMainBlocks, white, frameTime, doingEyetracking, grey, ...
     showAccuracy, accuracy);
 
 %% Save data
 save('myResult.mat', 'data');
-end
-
-function sample = sampleExpDist(minFrames, meanFrames, maxFrames)
-% exponential component beyond the minimum
-scale = meanFrames - minFrames;
-
-accepted = false;
-while ~accepted
-    sample = minFrames + exprnd(scale);
-    if sample <= maxFrames
-        accepted = true;
-    end
-end
-
-sample = round(sample);
-
 end

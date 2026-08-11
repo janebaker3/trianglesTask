@@ -1,22 +1,20 @@
-function handleBlockBreak(window, bl, white, frameTime, doingEyetracking, grey, dispAccuracy, accuracy)
+function handleBlockBreak(window, bl, mb, numMainBlocks, white, frameTime, doingEyetracking, grey, dispAccuracy, accuracy)
 if doingEyetracking
     Eyelink('StopRecording');
     Eyelink('Message', 'BLOCK_END');
 end
 
-switch bl
-    case 1
-        msg = 'End of Trial.\n\nTake a break!\n\nPress Enter when you are ready to continue.';
-    case 2
-        msg = 'End of Block %d.\n\nTake a break!\n\nPress Enter when you are ready to continue.';
-    case 3
-        msg = 'End of Task!\n\nPress Enter to exit.';
+if bl == 1
+    msg = 'End of Trial.\n\nTake a break!\n\nPress Enter when you are ready to continue.';
+elseif mb == numMainBlocks
+    msg = 'End of Task!\n\nPress Enter to exit.';
+else
+    msg = sprintf('End of Block %d of %d.\n\nTake a break!\n\nPress Enter when you are ready to continue.', ...
+        mb, numMainBlocks);
 end
 
 if ~dispAccuracy
-    DrawFormattedText(window, ...
-        sprintf(msg, bl), ...
-        'center', 'center', white);
+    DrawFormattedText(window, msg, 'center', 'center', white);
 else
     accuracy = round(accuracy * 100);
     DrawFormattedText(window, ...

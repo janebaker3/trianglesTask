@@ -10,3 +10,4 @@ tx = sourceX + abs(normrnd(0, stdHrz)) * direction;
 while tx < leftBound || tx > rightBound
     tx = sourceX + abs(normrnd(0, stdHrz)) * direction;
 end
+end

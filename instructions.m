@@ -151,3 +151,5 @@ while ~demoOver
     end
     WaitSecs(frameTime);
 end
+
+end
