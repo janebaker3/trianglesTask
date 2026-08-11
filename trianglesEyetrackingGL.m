@@ -59,7 +59,7 @@ if ~doingEyetracking
     Screen('Preference', 'SkipSyncTests', 1);
 end
 
-blue = [0 0 255];
+blue = [125 125 200];
 [window, windowRect] = PsychImaging('OpenWindow', screenNumber, blue, ...
     [xOffset, yOffset, xOffset + newWidth, yOffset + newHeight]);
 
@@ -231,7 +231,6 @@ for bl = 1:numBlk
     end
 
     if bl == 1
-        continue    
         [data, frameNum, accuracyData] = trainingBlock(window, f, bl, frameNum, data, ...
             white, grey, green, orange, red, defTriCol, x1, x3, xOffset, yCenterTri, ...
             anglesRad, radius, isConvex, newWidth, newHeight, frameTime, slack, numDistractors, ...
