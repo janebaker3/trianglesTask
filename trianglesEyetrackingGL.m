@@ -13,12 +13,14 @@ Screen('Preference', 'VisualDebugLevel', 3);
 doingEyetracking = 0;
 
 if doingEyetracking 
-    cd('C:\Users\jigol\Desktop\newTaskVersion')
-    eyeFileName = 'stuff.edf';
+    cd('C:Users/mattLab/Documents/JanePupil') %%%%% need to update this 
+    ioObject = io64;
+    LPT1address = hex2dec('3FB8');
+    status = io64(ioObject);
+    eyeFileName = 'test';
     warning('off', 'all');
     PsychDefaultSetup(2);
-    Screen('Preference', 'SkipSyncTests', 0);
-    %Eyelink('Initialize');
+    Screen('Preference', 'SkipSyncTests', 1);
 
     % DEBUGGING
     if ~EyelinkInit()
@@ -59,8 +61,7 @@ if ~doingEyetracking
     Screen('Preference', 'SkipSyncTests', 1);
 end
 
-blue = [125 125 200];
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, blue, ...
+[window, windowRect] = PsychImaging('OpenWindow', screenNumber, grey, ...
     [xOffset, yOffset, xOffset + newWidth, yOffset + newHeight]);
 
 Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA'); %
@@ -233,7 +234,7 @@ remainingComboIdx = remainingComboIdx(randperm(length(remainingComboIdx)));
 blockOrder = [firstComboIdx, remainingComboIdx];
 
 diffLabels = {'Easy', 'Medium', 'Hard'};
-hazLabels = {'Less Frequent', 'Frequent'};
+hazLabels = {'Low Frequency', 'High Frequency'};
 
 %% ---- Run the 6 main blocks ----
 for mb = 1:numMainBlocks

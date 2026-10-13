@@ -28,7 +28,7 @@ yellow = [0, 255, 0];
 leftNorm = leftDensity / max(leftDensity(:));
 rightNorm = rightDensity / max(rightDensity(:));
 
-maxAlpha = 165; % <-- overall transparency control (0 = invisible, 255 = fully opaque)
+maxAlpha = 70; % <-- overall transparency control (0 = invisible, 255 = fully opaque)
 
 switch mode
     case 'left'

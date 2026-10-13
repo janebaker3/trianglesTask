@@ -1,6 +1,6 @@
 function handleBlockBreak(window, bl, mb, numMainBlocks, white, frameTime, doingEyetracking, grey, dispAccuracy, accuracy)
 if doingEyetracking
-    Eyelink('StopRecording');
+    % Eyelink('StopRecording'); %% dont stop recording in matt's lab
     Eyelink('Message', 'BLOCK_END');
 end
 
@@ -36,8 +36,8 @@ while waitForEnter
     WaitSecs(0.01);
 end
 
-if doingEyetracking
-    Eyelink('StartRecording');
-end
+% if doingEyetracking
+%     Eyelink('StartRecording');
+% end
 WaitSecs(frameTime);
 end
